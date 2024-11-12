@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "350622692176",
+    "project_id": "simplecrud-c3173",
+    "storage_bucket": "simplecrud-c3173.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350622692176:android:fbb87442b9153849de7255",
+        "android_client_info": {
+          "package_name": "dev.vinigouveia.simplecrud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwugJ0rEJ8N0ZYpyORsrt_gnYrgLEsUjA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
