@@ -1,1 +1,1 @@
-Just a study project with the basic database operations (CRUD) using Firebase Realtime Database and Jetpack Compose for UI.
+This is a study project with the basic database operations (CRUD) using Firebase Realtime Database and Jetpack Compose for UI. I tried not to worry with application structure, architecture or some pattern, the main goal with this project is to understand how to implement and use Firebase Realtime Database.
