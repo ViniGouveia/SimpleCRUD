@@ -1,6 +1,5 @@
 package dev.vinigouveia.simplecrud.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -13,54 +12,37 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
 import dev.vinigouveia.simplecrud.model.User
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
 import dev.vinigouveia.simplecrud.ui.components.DeleteAllUsersDialog
 import dev.vinigouveia.simplecrud.ui.components.LazyColumnWithSwipe
-import dev.vinigouveia.simplecrud.viewModels.MainViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel = viewModel(),
+    dbReference: DatabaseReference,
     addCallback: () -> Unit,
     updateCallback: (String) -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    var usersList = remember { mutableStateOf<List<User>>(listOf()) }
     var showDialog by remember { mutableStateOf(false) }
-    var showDeleteToast by remember { mutableStateOf(false) }
-    var showDeleteAllToast by remember { mutableStateOf(false) }
-
-    val usersList by viewModel.usersList.collectAsState()
-
-    if (showDialog) {
-        DeleteAllUsersDialog(
-            onDismiss = { showDialog = false },
-            onConfirm = {
-                viewModel.deleteAllUsers()
-                showDialog = false
-                showDeleteAllToast = true
-            }
-        )
-    }
-
-    if (showDeleteAllToast) {
-        Toast.makeText(LocalContext.current, "All users deleted", Toast.LENGTH_SHORT).show()
-        showDeleteAllToast = false
-    }
-
-    if (showDeleteToast) {
-        Toast.makeText(LocalContext.current, "User deleted", Toast.LENGTH_SHORT).show()
-        showDeleteToast = false
-    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -91,19 +73,63 @@ fun HomeScreen(
                 }
             ) { Icon(imageVector = Icons.Default.Add, contentDescription = null) }
         },
-        floatingActionButtonPosition = FabPosition.End
+        floatingActionButtonPosition = FabPosition.End,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddings ->
+
+        dbReference.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                usersList.value = snapshot.children.map {
+                    User(
+                        id = it.child("id").value.toString(),
+                        name = it.child("name").value.toString(),
+                        age = it.child("age").value.toString().toInt(),
+                        email = it.child("email").value.toString()
+                    )
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = "Error: ${error.message}",
+                        actionLabel = "Dismiss",
+                        withDismissAction = true
+                    )
+                }
+            }
+        })
+
         UserList(
             modifier = modifier.padding(paddings),
-            usersList = usersList,
+            usersList = usersList.value,
             onUserClick = {
                 updateCallback(it)
             },
             onSwipeItem = {
-                viewModel.deleteUser(it)
-                showDeleteToast = true
+                scope.launch {
+                    dbReference.child(it).removeValue()
+                    snackbarHostState.showSnackbar(
+                        message = "User deleted"
+                    )
+                }
             }
         )
+
+        if (showDialog) {
+            DeleteAllUsersDialog(
+                onDismiss = { showDialog = false },
+                onConfirm = {
+                    scope.launch {
+                        dbReference.removeValue()
+                        snackbarHostState.showSnackbar(
+                            message = "All users deleted"
+                        )
+                    }
+                    showDialog = false
+                }
+            )
+        }
     }
 }
 

@@ -14,27 +14,33 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.database.DatabaseReference
 import dev.vinigouveia.simplecrud.model.User
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
-import dev.vinigouveia.simplecrud.viewModels.MainViewModel
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
 fun AddUserScreen(
-    viewModel: MainViewModel = viewModel(),
+    dbReference: DatabaseReference,
     returnCallback: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var age by remember { mutableIntStateOf(0) }
@@ -53,7 +59,8 @@ fun AddUserScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -85,8 +92,25 @@ fun AddUserScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    //viewModel.addUser()
-                    returnCallback()
+                    val id = dbReference.push().key ?: UUID.randomUUID().toString()
+                    val user = User(
+                        id = id,
+                        name = name,
+                        email = email,
+                        age = age
+                    )
+                    dbReference.child(id).setValue(user).addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            scope.launch {
+                                returnCallback()
+                                snackbarHostState.showSnackbar("User added successfully")
+                            }
+                        } else {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Error adding user")
+                            }
+                        }
+                    }
                 }
             ) {
                 Text("Save")

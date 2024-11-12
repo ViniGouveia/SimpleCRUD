@@ -4,6 +4,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun DeleteAllUsersDialog(
@@ -11,6 +12,7 @@ fun DeleteAllUsersDialog(
     onDismiss: () -> Unit
 ) {
     AlertDialog(
+        properties = DialogProperties(),
         onDismissRequest = onDismiss,
         title = { Text(text = "Delete all users") },
         text = { Text(text = "This action will delete all users, if you want to remove just one user, swipe it to the left or right. Do you want to continue?") },

@@ -14,37 +14,56 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.database.DatabaseReference
 import dev.vinigouveia.simplecrud.model.User
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
-import dev.vinigouveia.simplecrud.viewModels.MainViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun UpdateUserScreen(
-    viewModel: MainViewModel = viewModel(),
+    dbReference: DatabaseReference,
+    userId: String,
     returnCallback: () -> Unit
 ) {
-    val user = viewModel.getUser()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    var name by remember { mutableStateOf(user.name) }
-    var email by remember { mutableStateOf(user.email) }
-    var age by remember { mutableIntStateOf(user.age) }
+    var user by remember { mutableStateOf(User()) }
+
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var age by remember { mutableIntStateOf(0) }
+
+    dbReference.child(userId).get().addOnCompleteListener {
+        if (it.isSuccessful) {
+            val result = it.result.getValue(User::class.java)
+            if (result != null) {
+                user = result
+                name = result.name
+                email = result.email
+                age = result.age
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             CustomTopAppBar(
-                title = "Add New User",
+                title = "Update User",
                 navigationIcon = {
                     IconButton(onClick = returnCallback) {
                         Icon(
@@ -54,7 +73,8 @@ fun UpdateUserScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -86,15 +106,20 @@ fun UpdateUserScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    viewModel.updateUser(
-                        User(
-                            id = user.id,
-                            name = name,
-                            email = email,
-                            age = age
+                    dbReference.child(userId).updateChildren(
+                        mapOf(
+                            "name" to name,
+                            "email" to email,
+                            "age" to age
                         )
-                    )
-                    returnCallback()
+                    ).addOnCompleteListener {
+                        if (it.isSuccessful) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("User updated successfully")
+                            }
+                            returnCallback()
+                        }
+                    }
                 }
             ) {
                 Text("Save")
