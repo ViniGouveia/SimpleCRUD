@@ -1,6 +1,10 @@
 package dev.vinigouveia.simplecrud.ui.components
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -11,7 +15,8 @@ import androidx.compose.runtime.Composable
 @Composable
 fun CustomTopAppBar(
     title: String,
-    navigationIcon: @Composable (() -> Unit)? = null,
+    showBackButton: Boolean = false,
+    onBackClick: (() -> Unit)? = null,
     actionIcon: @Composable (() -> Unit)? = null
 ) {
     TopAppBar(
@@ -23,7 +28,14 @@ fun CustomTopAppBar(
             )
         },
         navigationIcon = {
-            navigationIcon?.let { it() }
+            if (showBackButton) {
+                IconButton(onClick = { onBackClick?.let { it() } }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = null
+                    )
+                }
+            }
         },
         actions = {
             actionIcon?.let { it() }

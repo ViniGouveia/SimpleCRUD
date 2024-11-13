@@ -7,11 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -36,7 +32,7 @@ import kotlinx.coroutines.launch
 fun UpdateUserScreen(
     dbReference: DatabaseReference,
     userId: String,
-    returnCallback: () -> Unit
+    onBackClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -64,14 +60,8 @@ fun UpdateUserScreen(
         topBar = {
             CustomTopAppBar(
                 title = "Update User",
-                navigationIcon = {
-                    IconButton(onClick = returnCallback) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                }
+                showBackButton = true,
+                onBackClick = { onBackClick() }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -117,7 +107,7 @@ fun UpdateUserScreen(
                             scope.launch {
                                 snackbarHostState.showSnackbar("User updated successfully")
                             }
-                            returnCallback()
+                            onBackClick()
                         }
                     }
                 }

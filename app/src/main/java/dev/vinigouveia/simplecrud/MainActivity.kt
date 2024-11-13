@@ -14,6 +14,8 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import dev.vinigouveia.simplecrud.ui.screens.AddUserScreen
 import dev.vinigouveia.simplecrud.ui.screens.HomeScreen
+import dev.vinigouveia.simplecrud.ui.screens.LoginScreen
+import dev.vinigouveia.simplecrud.ui.screens.SignUpScreen
 import dev.vinigouveia.simplecrud.ui.screens.UpdateUserScreen
 import dev.vinigouveia.simplecrud.ui.theme.SimpleCRUDTheme
 
@@ -41,7 +43,19 @@ fun NavigationBuilder(
     dbReference: DatabaseReference
 ) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "home") {
+    NavHost(navController = navController, startDestination = "login") {
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = { navController.navigate("home") },
+                onSignUpClick = { navController.navigate("signUp") }
+            )
+        }
+        composable("signUp") {
+            SignUpScreen(
+                onSignUpSuccess = { navController.popBackStack() },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
         composable("home") {
             HomeScreen(
                 dbReference = dbReference,
