@@ -2,6 +2,7 @@ package dev.vinigouveia.simplecrud.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,8 +16,7 @@ import androidx.compose.runtime.Composable
 @Composable
 fun CustomTopAppBar(
     title: String,
-    showBackButton: Boolean = false,
-    onBackClick: (() -> Unit)? = null,
+    navigationButton: @Composable (() -> Unit)? = null,
     actionIcon: @Composable (() -> Unit)? = null
 ) {
     TopAppBar(
@@ -28,18 +28,37 @@ fun CustomTopAppBar(
             )
         },
         navigationIcon = {
-            if (showBackButton) {
-                IconButton(onClick = { onBackClick?.let { it() } }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = null
-                    )
-                }
-            }
+            navigationButton?.let { it() }
         },
         actions = {
             actionIcon?.let { it() }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
     )
+}
+
+@Composable
+fun BackIcon(
+    onBackClick: () -> Unit
+) {
+    IconButton(onClick = { onBackClick() }) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+            tint = MaterialTheme.colorScheme.onPrimary,
+            contentDescription = null
+        )
+    }
+}
+
+@Composable
+fun SignOutIcon(
+    onBackClick: () -> Unit
+) {
+    IconButton(onClick = { onBackClick() }) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.ExitToApp,
+            tint = MaterialTheme.colorScheme.onPrimary,
+            contentDescription = null
+        )
+    }
 }

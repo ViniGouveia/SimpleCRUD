@@ -8,14 +8,16 @@ import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun DeleteAllUsersDialog(
+    title: String,
+    text: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         properties = DialogProperties(),
         onDismissRequest = onDismiss,
-        title = { Text(text = "Delete all users") },
-        text = { Text(text = "This action will delete all users, if you want to remove just one user, swipe it to the left or right. Do you want to continue?") },
+        title = { Text(text = title) },
+        text = { Text(text = text) },
         confirmButton = {
             Button(onClick = onConfirm) {
                 Text("Confirm")

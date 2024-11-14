@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.firebase.database.DatabaseReference
 import dev.vinigouveia.simplecrud.model.User
+import dev.vinigouveia.simplecrud.ui.components.BackIcon
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
 import kotlinx.coroutines.launch
 
@@ -60,8 +61,9 @@ fun UpdateUserScreen(
         topBar = {
             CustomTopAppBar(
                 title = "Update User",
-                showBackButton = true,
-                onBackClick = { onBackClick() }
+                navigationButton = {
+                    BackIcon(onBackClick = onBackClick)
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

@@ -1,13 +1,14 @@
 {
   "project_info": {
     "project_number": "350622692176",
+    "firebase_url": "https://simplecrud-c3173-default-rtdb.firebaseio.com",
     "project_id": "simplecrud-c3173",
     "storage_bucket": "simplecrud-c3173.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:350622692176:android:fbb87442b9153849de7255",
+        "mobilesdk_app_id": "1:350622692176:android:143ee61cb0e6d162de7255",
         "android_client_info": {
           "package_name": "dev.vinigouveia.simplecrud"
         }

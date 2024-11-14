@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.firebase.database.DatabaseReference
 import dev.vinigouveia.simplecrud.model.User
+import dev.vinigouveia.simplecrud.ui.components.BackIcon
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -46,8 +47,9 @@ fun AddUserScreen(
         topBar = {
             CustomTopAppBar(
                 title = "Add New User",
-                showBackButton = true,
-                onBackClick = { onBackClick() }
+                navigationButton = {
+                    BackIcon(onBackClick = onBackClick)
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -29,20 +30,24 @@ import dev.vinigouveia.simplecrud.model.User
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
 import dev.vinigouveia.simplecrud.ui.components.DeleteAllUsersDialog
 import dev.vinigouveia.simplecrud.ui.components.LazyColumnWithSwipe
+import dev.vinigouveia.simplecrud.ui.components.SignOutIcon
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    authInstance: FirebaseAuth,
     dbReference: DatabaseReference,
     addCallback: () -> Unit,
-    updateCallback: (String) -> Unit
+    updateCallback: (String) -> Unit,
+    onBackClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     var usersList = remember { mutableStateOf<List<User>>(listOf()) }
-    var showDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showLogOutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -52,7 +57,7 @@ fun HomeScreen(
                 actionIcon = {
                     IconButton(
                         onClick = {
-                            showDialog = true
+                            showDeleteDialog = true
                         }
                     ) {
                         Icon(
@@ -61,6 +66,9 @@ fun HomeScreen(
                             contentDescription = null
                         )
                     }
+                },
+                navigationButton = {
+                    SignOutIcon { showLogOutDialog = true }
                 }
             )
         },
@@ -116,9 +124,11 @@ fun HomeScreen(
             }
         )
 
-        if (showDialog) {
+        if (showDeleteDialog) {
             DeleteAllUsersDialog(
-                onDismiss = { showDialog = false },
+                title = "Delete all users",
+                text = "This action will delete all users, if you want to remove just one user, swipe it to the left or right. Do you want to continue?",
+                onDismiss = { showDeleteDialog = false },
                 onConfirm = {
                     scope.launch {
                         dbReference.removeValue()
@@ -126,7 +136,20 @@ fun HomeScreen(
                             message = "All users deleted"
                         )
                     }
-                    showDialog = false
+                    showDeleteDialog = false
+                }
+            )
+        }
+
+        if (showLogOutDialog) {
+            DeleteAllUsersDialog(
+                title = "Sign Out",
+                text = "Are you sure you want to sign out?",
+                onDismiss = { showLogOutDialog = false },
+                onConfirm = {
+                    showLogOutDialog = false
+                    authInstance.signOut()
+                    onBackClick()
                 }
             )
         }

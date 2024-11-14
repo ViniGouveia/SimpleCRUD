@@ -1,6 +1,5 @@
 package dev.vinigouveia.simplecrud.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,31 +22,33 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
+import dev.vinigouveia.simplecrud.ui.components.BackIcon
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(
+fun ForgetPasswordScreen(
     authInstance: FirebaseAuth,
-    onLoginSuccess: () -> Unit,
-    onSignUpClick: () -> Unit,
-    onForgetPasswordClick: () -> Unit,
-    onSignInWithPhoneNumberClick: () -> Unit
+    onBackClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { CustomTopAppBar(title = "Login") },
+        topBar = {
+            CustomTopAppBar(
+                title = "Forget Password",
+                navigationButton = {
+                    BackIcon(onBackClick = onBackClick)
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddings ->
         Column(
@@ -58,7 +59,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Welcome!",
+                text = "Reset password",
                 modifier = Modifier.padding(vertical = 50.dp),
                 style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center
@@ -67,66 +68,34 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text("Enter your email") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
+                    .padding(start = 32.dp, end = 32.dp, bottom = 32.dp, top = 8.dp)
             )
-
-            OutlinedTextField(
-                value = password,
-                visualTransformation = PasswordVisualTransformation(),
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 32.dp, end = 32.dp, bottom = 4.dp, top = 8.dp)
-            )
-
-            Text(
-                text = "Forget password?",
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
-                    .clickable { onForgetPasswordClick() },
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.End
-            )
-
-            Button(
-                modifier = Modifier
-                    .width(200.dp)
-                    .padding(bottom = 8.dp, top = 32.dp),
-                onClick = {
-                    authInstance.signInWithEmailAndPassword(email, password).addOnCompleteListener {
-                        if (it.isSuccessful) {
-                            onLoginSuccess()
-                        } else {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Error: ${it.exception?.message}",
-                                    duration = SnackbarDuration.Long
-                                )
-                            }
-                        }
-                    }
-                }
-            ) {
-                Text("Sign In")
-            }
 
             Button(
                 modifier = Modifier
                     .width(200.dp)
                     .padding(bottom = 8.dp),
-                onClick = { onSignUpClick() }
-            ) { Text("Sign Up") }
-
-            Button(
-                modifier = Modifier.width(200.dp),
-                onClick = { onSignInWithPhoneNumberClick() }
-            ) { Text("Sign in using phone number", textAlign = TextAlign.Center) }
+                onClick = {
+                    authInstance.sendPasswordResetEmail(email).addOnCompleteListener {
+                        scope.launch {
+                            if (it.isSuccessful) {
+                                snackbarHostState.showSnackbar(
+                                    message = "We sent a password reset email to you email address",
+                                    duration = SnackbarDuration.Long
+                                )
+                            } else snackbarHostState.showSnackbar(
+                                message = "Error: ${it.exception?.message}",
+                                duration = SnackbarDuration.Long
+                            )
+                        }
+                    }
+                }
+            ) {
+                Text("Reset")
+            }
         }
     }
 }

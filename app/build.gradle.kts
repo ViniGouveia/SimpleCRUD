@@ -17,6 +17,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig = signingConfigs.getByName("debug")
     }
 
     buildTypes {
@@ -59,6 +60,7 @@ dependencies {
 
     // Firebase
     implementation(libs.firebase.database)
+    implementation(libs.firebase.auth)
 
     // Tests Dependencies
     testImplementation(libs.junit)

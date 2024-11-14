@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -24,10 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
+import dev.vinigouveia.simplecrud.ui.components.BackIcon
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
+import kotlinx.coroutines.launch
 
 @Composable
 fun SignUpScreen(
+    authInstance: FirebaseAuth,
     onSignUpSuccess: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -41,9 +46,10 @@ fun SignUpScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             CustomTopAppBar(
-                title = "SignUp",
-                showBackButton = true,
-                onBackClick = { onBackClick() }
+                title = "Sign up",
+                navigationButton = {
+                    BackIcon(onBackClick = onBackClick)
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -86,7 +92,23 @@ fun SignUpScreen(
                     .width(200.dp)
                     .padding(bottom = 8.dp),
                 onClick = {
-
+                    authInstance.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener {
+                            scope.launch {
+                                if (it.isSuccessful) {
+                                    onSignUpSuccess()
+                                    snackbarHostState.showSnackbar(
+                                        message = "Your account has been created!",
+                                        duration = SnackbarDuration.Long
+                                    )
+                                } else {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Error: ${it.exception?.message}",
+                                        duration = SnackbarDuration.Long
+                                    )
+                                }
+                            }
+                        }
                 }
             ) {
                 Text("Sign Up")
