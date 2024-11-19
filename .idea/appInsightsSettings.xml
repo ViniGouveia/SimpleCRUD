@@ -10,7 +10,7 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="dev.vinigouveia.simplecrud" />
-                  <option name="mobileSdkAppId" value="1:350622692176:android:fbb87442b9153849de7255" />
+                  <option name="mobileSdkAppId" value="1:350622692176:android:143ee61cb0e6d162de7255" />
                   <option name="projectId" value="simplecrud-c3173" />
                   <option name="projectNumber" value="350622692176" />
                 </ConnectionSetting>

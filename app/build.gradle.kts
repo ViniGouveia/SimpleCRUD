@@ -61,6 +61,7 @@ dependencies {
     // Firebase
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.messaging)
 
     // Tests Dependencies
     testImplementation(libs.junit)
