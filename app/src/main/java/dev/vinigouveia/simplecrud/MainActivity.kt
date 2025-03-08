@@ -2,13 +2,21 @@ package dev.vinigouveia.simplecrud
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
@@ -19,6 +27,8 @@ import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import dev.vinigouveia.simplecrud.ui.screens.AddUserScreen
 import dev.vinigouveia.simplecrud.ui.screens.ForgetPasswordScreen
 import dev.vinigouveia.simplecrud.ui.screens.HomeScreen
@@ -33,16 +43,62 @@ class MainActivity : ComponentActivity() {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance()
     private val dbReference = database.getReference(DB_CHILD)
+    private val firebaseStorage = FirebaseStorage.getInstance()
+    private val storageReference = firebaseStorage.reference
+
+    lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+
+    private lateinit var imageUri: MutableState<Uri?>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         requestNotificationPermission()
+        requestMediaPermission()
+        registerActivityForResult()
+
+        enableEdgeToEdge()
         setContent {
             SimpleCRUDTheme {
-                NavigationBuilder(this, auth, dbReference)
+                imageUri = rememberSaveable { mutableStateOf(null) }
+
+                NavigationBuilder(
+                    activity = this,
+                    userImage = imageUri.value,
+                    authInstance = auth,
+                    storageReference = storageReference,
+                    dbReference = dbReference,
+                    onUserImageClick = { getUserImage() },
+                    clearUserImage = { clearImage() }
+                )
             }
         }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String?>,
+        grantResults: IntArray,
+        deviceId: Int
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
+
+        if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            val intent = Intent()
+            intent.type = "image/*"
+            intent.action = Intent.ACTION_GET_CONTENT
+            activityResultLauncher.launch(intent)
+        }
+    }
+
+    private fun clearImage() {
+        imageUri.value = null
+    }
+
+    private fun getUserImage() {
+        val intent = Intent()
+        intent.type = "image/*"
+        intent.action = Intent.ACTION_GET_CONTENT
+        activityResultLauncher.launch(intent)
     }
 
     private fun requestNotificationPermission() {
@@ -55,11 +111,47 @@ class MainActivity : ComponentActivity() {
             if (!hasPermission) {
                 ActivityCompat.requestPermissions(
                     this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    arrayOf(
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ),
                     0
                 )
             }
         }
+    }
+
+    private fun requestMediaPermission() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        val hasPermission = ContextCompat.checkSelfPermission(
+            this,
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasPermission) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(permission),
+                1
+            )
+        }
+    }
+
+    private fun registerActivityForResult() {
+        activityResultLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
+                ActivityResultCallback { result ->
+                    val resultCode = result.resultCode
+                    val imageData = result.data
+                    if (resultCode == RESULT_OK && imageData != null) {
+                        imageUri.value = imageData.data
+                    }
+                }
+            )
     }
 
     private companion object {
@@ -70,8 +162,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun NavigationBuilder(
     activity: Activity,
+    userImage: Uri?,
     authInstance: FirebaseAuth,
-    dbReference: DatabaseReference
+    storageReference: StorageReference,
+    dbReference: DatabaseReference,
+    onUserImageClick: () -> Unit,
+    clearUserImage: () -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -112,6 +208,7 @@ fun NavigationBuilder(
             HomeScreen(
                 authInstance = authInstance,
                 dbReference = dbReference,
+                storageReference = storageReference,
                 addCallback = { navController.navigate("addUser") },
                 updateCallback = { userId ->
                     navController.navigate(route = "updateUser/$userId")
@@ -124,8 +221,12 @@ fun NavigationBuilder(
         }
         composable("addUser") {
             AddUserScreen(
+                storageReference = storageReference,
                 dbReference = dbReference,
+                userImage = userImage,
+                onUserImageClick = { onUserImageClick() }
             ) {
+                clearUserImage()
                 navController.popBackStack()
             }
         }
@@ -134,9 +235,13 @@ fun NavigationBuilder(
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
             UpdateUserScreen(
+                storageReference = storageReference,
                 dbReference = dbReference,
-                backStackEntry.arguments?.getString("userId") ?: ""
+                onUserImageClick = { onUserImageClick() },
+                userImage = userImage,
+                userId = backStackEntry.arguments?.getString("userId") ?: ""
             ) {
+                clearUserImage()
                 navController.popBackStack()
             }
         }

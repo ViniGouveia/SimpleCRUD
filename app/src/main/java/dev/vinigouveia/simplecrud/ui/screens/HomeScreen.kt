@@ -26,6 +26,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.StorageReference
 import dev.vinigouveia.simplecrud.model.User
 import dev.vinigouveia.simplecrud.ui.components.CustomTopAppBar
 import dev.vinigouveia.simplecrud.ui.components.DeleteAllUsersDialog
@@ -37,6 +38,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     modifier: Modifier = Modifier,
     authInstance: FirebaseAuth,
+    storageReference: StorageReference,
     dbReference: DatabaseReference,
     addCallback: () -> Unit,
     updateCallback: (String) -> Unit,
@@ -92,7 +94,8 @@ fun HomeScreen(
                         id = it.child("id").value.toString(),
                         name = it.child("name").value.toString(),
                         age = it.child("age").value.toString().toInt(),
-                        email = it.child("email").value.toString()
+                        email = it.child("email").value.toString(),
+                        imageUrl = it.child("imageUrl").value.toString()
                     )
                 }
             }
@@ -117,6 +120,7 @@ fun HomeScreen(
             onSwipeItem = {
                 scope.launch {
                     dbReference.child(it).removeValue()
+                    storageReference.child("images").child(it).delete()
                     snackbarHostState.showSnackbar(
                         message = "User deleted"
                     )
@@ -132,6 +136,11 @@ fun HomeScreen(
                 onConfirm = {
                     scope.launch {
                         dbReference.removeValue()
+                        storageReference.child("images").listAll().addOnCompleteListener {
+                            it.result.items.forEach {
+                                it.delete()
+                            }
+                        }
                         snackbarHostState.showSnackbar(
                             message = "All users deleted"
                         )

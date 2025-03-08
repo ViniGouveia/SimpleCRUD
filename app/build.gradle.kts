@@ -59,9 +59,11 @@ dependencies {
     implementation(libs.jetpack.compose)
 
     // Firebase
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.storage)
 
     // Tests Dependencies
     testImplementation(libs.junit)
@@ -71,4 +73,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Coil
+    implementation(libs.coil)
 }
